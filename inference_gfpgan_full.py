@@ -1,12 +1,34 @@
+import os
 import argparse
+
+parser = argparse.ArgumentParser()
+parser.add_argument('--upscale_factor', type=int, default=1)
+parser.add_argument('--model_path', type=str, default='experiments/pretrained_models/GFPGANv1.pth')
+parser.add_argument('--input_dir', type=str, default='')
+parser.add_argument('--output_dir', type=str, default='')
+parser.add_argument('--suffix', type=str, default=None, help='Suffix of the restored faces')
+parser.add_argument('--only_center_face', action='store_true')
+parser.add_argument('--aligned', action='store_true')
+parser.add_argument('--paste_back', action='store_true')
+parser.add_argument("--gpu_id", dest='gpu_id', default=0, type=int)
+
+args = parser.parse_args()
+if args.input_dir.endswith('/'):
+    args.input_dir = args.input_dir[:-1]
+save_root = args.output_dir
+os.makedirs(save_root, exist_ok=True)
+
+# torch.cuda.set_device(opt.gpu_id)
+os.environ["CUDA_DEVICE_ORDER"]="PCI_BUS_ID"   
+os.environ["CUDA_VISIBLE_DEVICES"]=str(args.gpu_id)
+
+
 import cv2
 import glob
 import numpy as np
-import os
 import torch
 from facexlib.utils.face_restoration_helper import FaceRestoreHelper
 from torchvision.transforms.functional import normalize
-
 from archs.gfpganv1_arch import GFPGANv1
 from basicsr.utils import img2tensor, imwrite, tensor2img
 
@@ -75,22 +97,11 @@ def restoration(gfpgan,
 
 
 if __name__ == '__main__':
+    
+
+
+    # device = torch.device('cuda:' + str(args.gpu_id) if torch.cuda.is_available() else 'cpu')
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
-    parser = argparse.ArgumentParser()
-
-    parser.add_argument('--upscale_factor', type=int, default=1)
-    parser.add_argument('--model_path', type=str, default='experiments/pretrained_models/GFPGANv1.pth')
-    parser.add_argument('--test_path', type=str, default='inputs/whole_imgs')
-    parser.add_argument('--suffix', type=str, default=None, help='Suffix of the restored faces')
-    parser.add_argument('--only_center_face', action='store_true')
-    parser.add_argument('--aligned', action='store_true')
-    parser.add_argument('--paste_back', action='store_true')
-
-    args = parser.parse_args()
-    if args.test_path.endswith('/'):
-        args.test_path = args.test_path[:-1]
-    save_root = 'results/'
-    os.makedirs(save_root, exist_ok=True)
 
     # initialize the GFP-GAN
     gfpgan = GFPGANv1(
@@ -115,7 +126,7 @@ if __name__ == '__main__':
     face_helper = FaceRestoreHelper(
         upscale_factor=1, face_size=512, crop_ratio=(1, 1), det_model='retinaface_resnet50', save_ext='png')
 
-    img_list = sorted(glob.glob(os.path.join(args.test_path, '*')))
+    img_list = sorted(glob.glob(os.path.join(args.input_dir, '*')))
     for img_path in img_list:
         restoration(
             gfpgan,

@@ -24,8 +24,11 @@ wget https://github.com/TencentARC/GFPGAN/releases/download/v0.1.0/GFPGANv1.pth 
 # Inference 
 
 ```
-BASICSR_JIT=True python inference_gfpgan_full.py --model_path experiments/pretrained_models/GFPGANv1.pth --test_path /media/ubuntu/WDC/deepvoodoo_data/frank
-
-BASICSR_JIT=True python inference_gfpgan_full.py --model_path experiments/pretrained_models/GFPGANv1.pth --test_path /media/ubuntu/WDC/deepvoodoo_data/frank --aligned
+BASICSR_JIT=True python inference_gfpgan_full.py \
+--model_path experiments/pretrained_models/GFPGANv1.pth \
+--input_dir /media/ubuntu/WDC/deepvoodoo_data/frank \
+--output_dir /media/ubuntu/WDC/deepvoodoo_results/frank_GFPGAN \
+--gpu_id 1
+--aligned 
 ```
 
