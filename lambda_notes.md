@@ -2,6 +2,8 @@
 
 ### Build environment
 ```
+git clone https://github.com/DeepVoodooFX/GFPGAN.git
+cd GFPGAN
 virtualenv -p /usr/bin/python3.6 venv
 . venv/bin/activate
 BASICSR_EXT=True pip install basicsr
