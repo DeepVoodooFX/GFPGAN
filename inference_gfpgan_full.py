@@ -1,5 +1,10 @@
 import os
 import argparse
+from DFLIMG import DFLIMG, DFLPNG
+from pathlib import Path
+from PIL import Image
+import numpy as np
+
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--upscale_factor', type=int, default=1)
@@ -11,6 +16,8 @@ parser.add_argument('--only_center_face', action='store_true')
 parser.add_argument('--aligned', action='store_true')
 parser.add_argument('--paste_back', action='store_true')
 parser.add_argument("--gpu_id", dest='gpu_id', default=0, type=int)
+parser.add_argument('--data_type', type=str, dest="data_type", default='dfl', choices=['dfl', 'raw'],
+                    help='Input image type. raw input image does not have meta data for face attributes')
 
 args = parser.parse_args()
 if args.input_dir.endswith('/'):
@@ -18,7 +25,6 @@ if args.input_dir.endswith('/'):
 save_root = args.output_dir
 os.makedirs(save_root, exist_ok=True)
 
-# torch.cuda.set_device(opt.gpu_id)
 os.environ["CUDA_DEVICE_ORDER"]="PCI_BUS_ID"   
 os.environ["CUDA_VISIBLE_DEVICES"]=str(args.gpu_id)
 
@@ -56,8 +62,7 @@ def restoration(gfpgan,
         # get face landmarks for each face
         face_helper.get_face_landmarks_5(only_center_face=only_center_face, pad_blur=False)
         # align and warp each face
-        save_crop_path = os.path.join(save_root, 'cropped_faces', img_name)
-        face_helper.align_warp_face(save_crop_path)
+        face_helper.align_warp_face()
 
     # face restoration
     for idx, cropped_face in enumerate(face_helper.cropped_faces):
@@ -78,22 +83,31 @@ def restoration(gfpgan,
         restored_face = restored_face.astype('uint8')
         face_helper.add_restored_face(restored_face)
 
-        if suffix is not None:
-            save_face_name = f'{basename}_{idx:02d}_{suffix}.png'
-        else:
-            save_face_name = f'{basename}_{idx:02d}.png'
-        save_restore_path = os.path.join(save_root, 'restored_faces', save_face_name)
-        imwrite(restored_face, save_restore_path)
-
-        # save cmp image
-        cmp_img = np.concatenate((cropped_face, restored_face), axis=1)
-        imwrite(cmp_img, os.path.join(save_root, 'cmp', f'{basename}_{idx:02d}.png'))
-
     if not has_aligned and paste_back:
         face_helper.get_inverse_affine(None)
-        save_restore_path = os.path.join(save_root, 'restored_imgs', img_name)
+        save_restore_path = os.path.join(save_root, img_name)
+        save_restore_path = ".".join(save_restore_path.split('.')[:-1]) + '.png'
+
         # paste each restored face to the input image
         face_helper.paste_faces_to_input_image(save_restore_path)
+
+        # Add DFL meta data to output image
+        if args.data_type == 'dfl':        
+            dfl_img1 = DFLIMG.load(Path(img_path))
+            if dfl_img1:    
+                DFLPNG.DFLPNG.embed_data(
+                    filename = save_restore_path,
+                    face_type = dfl_img1.get_face_type(),
+                    landmarks = dfl_img1.get_landmarks(),
+                    source_filename = dfl_img1.get_source_filename(),
+                    source_rect = dfl_img1.get_source_rect(),
+                    source_landmarks = dfl_img1.get_source_landmarks(),
+                    image_to_face_mat = dfl_img1.get_image_to_face_mat(),
+                    pitch_yaw_roll = None,
+                    eyebrows_expand_mod = dfl_img1.get_eyebrows_expand_mod(),
+                    cfg = None,
+                    model_data = None
+                )
 
 
 if __name__ == '__main__':
@@ -135,4 +149,4 @@ if __name__ == '__main__':
             suffix=args.suffix,
             paste_back=args.paste_back)
 
-    print('Results are in the <results> folder.')
+    print('Results are in the ' + args.output_dir + ' folder.')
