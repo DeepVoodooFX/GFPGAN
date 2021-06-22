@@ -86,7 +86,7 @@ def restoration(gfpgan,
     if not has_aligned and paste_back:
         face_helper.get_inverse_affine(None)
         save_restore_path = os.path.join(save_root, img_name)
-        save_restore_path = ".".join(save_restore_path.split('.')[:-1]) + '.png'
+
 
         # paste each restored face to the input image
         face_helper.paste_faces_to_input_image(save_restore_path)
@@ -94,21 +94,34 @@ def restoration(gfpgan,
         # Add DFL meta data to output image
         if args.data_type == 'dfl':        
             dfl_img1 = DFLIMG.load(Path(img_path))
-            if dfl_img1:    
-                DFLPNG.DFLPNG.embed_data(
-                    filename = save_restore_path,
-                    face_type = dfl_img1.get_face_type(),
-                    landmarks = dfl_img1.get_landmarks(),
-                    source_filename = dfl_img1.get_source_filename(),
-                    source_rect = dfl_img1.get_source_rect(),
-                    source_landmarks = dfl_img1.get_source_landmarks(),
-                    image_to_face_mat = dfl_img1.get_image_to_face_mat(),
-                    pitch_yaw_roll = None,
-                    eyebrows_expand_mod = dfl_img1.get_eyebrows_expand_mod(),
-                    cfg = None,
-                    model_data = None
-                )
+            if dfl_img1:
+                if save_restore_path.split('.')[-1] == 'jpg':
+                    dfl_img2 = DFLIMG.load(Path(save_restore_path))
 
+                    # Add meta data to output image
+                    dfl_img2.set_face_type(dfl_img1.get_face_type())
+                    dfl_img2.set_landmarks(dfl_img1.get_landmarks())
+                    dfl_img2.set_source_rect(dfl_img1.get_source_rect())
+                    dfl_img2.set_source_filename(dfl_img1.get_source_filename())
+                    dfl_img2.set_source_landmarks(dfl_img1.get_source_landmarks())
+                    dfl_img2.set_image_to_face_mat(dfl_img1.get_image_to_face_mat())
+                    dfl_img2.save()
+                elif save_restore_path.split('.')[-1] == 'png':
+                    DFLPNG.DFLPNG.embed_data(
+                        filename = save_restore_path,
+                        face_type = dfl_img1.get_face_type(),
+                        landmarks = dfl_img1.get_landmarks(),
+                        source_filename = dfl_img1.get_source_filename(),
+                        source_rect = dfl_img1.get_source_rect(),
+                        source_landmarks = dfl_img1.get_source_landmarks(),
+                        image_to_face_mat = dfl_img1.get_image_to_face_mat(),
+                        pitch_yaw_roll = None,
+                        eyebrows_expand_mod = dfl_img1.get_eyebrows_expand_mod(),
+                        cfg = None,
+                        model_data = None
+                    )
+                else:
+                    print('unknown output format: ' + save_restore_path.split('.')[-1])
 
 if __name__ == '__main__':
     
@@ -133,11 +146,12 @@ if __name__ == '__main__':
     gfpgan.load_state_dict(checkpoint['params_ema'])
     gfpgan.eval()
 
+    img_list = sorted(glob.glob(os.path.join(args.input_dir, '*')))
+
     # initialize face helper
     face_helper = FaceRestoreHelper(
-        upscale_factor=1, face_size=512, crop_ratio=(1, 1), det_model='retinaface_resnet50', save_ext='png')
+        upscale_factor=1, face_size=512, crop_ratio=(1, 1), det_model='retinaface_resnet50', save_ext=img_list[0].split('.')[-1])
 
-    img_list = sorted(glob.glob(os.path.join(args.input_dir, '*')))
     for img_path in img_list:
         restoration(
             gfpgan,
