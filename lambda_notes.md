@@ -32,10 +32,20 @@ wget https://github.com/TencentARC/GFPGAN/releases/download/v0.1.0/GFPGANv1.pth 
 # Inference 
 
 ```
+# Run inference with DFL extracted/merged images and save the DFL meta data in the results
 BASICSR_JIT=True python inference_gfpgan_full.py \
 --model_path experiments/pretrained_models/GFPGANv1.pth \
 --input_dir /ParkCounty/home/DFDNet_data/frank \
 --output_dir /ParkCounty/home/DFDNet_data/frank_GFPGAN \
 --paste_back \
+--gpu_id 2
+
+# Run inference with non-DFL images
+BASICSR_JIT=True python inference_gfpgan_full.py \
+--model_path experiments/pretrained_models/GFPGANv1.pth \
+--input_dir /ParkCounty/home/DFDNet_data/frank \
+--output_dir /ParkCounty/home/DFDNet_data/frank_GFPGAN \
+--paste_back \
+--data_type raw \
 --gpu_id 2
 ```
