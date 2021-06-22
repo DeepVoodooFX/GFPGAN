@@ -34,6 +34,6 @@ BASICSR_JIT=True python inference_gfpgan_full.py \
 --model_path experiments/pretrained_models/GFPGANv1.pth \
 --input_dir /ParkCounty/home/DFDNet_data/frank \
 --output_dir /ParkCounty/home/DFDNet_data/frank_GFPGAN \
+--paste_back \
 --gpu_id 2
 ```
-
