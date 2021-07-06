@@ -150,7 +150,7 @@ if __name__ == '__main__':
 
     # initialize face helper
     face_helper = FaceRestoreHelper(
-        upscale_factor=1, face_size=512, crop_ratio=(1, 1), det_model='retinaface_resnet50', save_ext=img_list[0].split('.')[-1])
+        upscale_factor=args.upscale_factor, face_size=512, crop_ratio=(1, 1), det_model='retinaface_resnet50', save_ext=img_list[0].split('.')[-1])
 
     for img_path in img_list:
         restoration(
