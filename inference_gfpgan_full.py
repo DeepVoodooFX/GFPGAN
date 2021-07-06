@@ -18,6 +18,7 @@ parser.add_argument('--paste_back', action='store_true')
 parser.add_argument("--gpu_id", dest='gpu_id', default=0, type=int)
 parser.add_argument('--data_type', type=str, dest="data_type", default='dfl', choices=['dfl', 'raw'],
                     help='Input image type. raw input image does not have meta data for face attributes')
+parser.add_argument('--randomize_noise', action='store_true')
 
 args = parser.parse_args()
 if args.input_dir.endswith('/'):
@@ -73,7 +74,7 @@ def restoration(gfpgan,
 
         try:
             with torch.no_grad():
-                output = gfpgan(cropped_face_t, return_rgb=False)[0]
+                output = gfpgan(cropped_face_t, return_rgb=False, randomize_noise=args.randomize_noise)[0]
                 # convert to image
                 restored_face = tensor2img(output.squeeze(0), rgb2bgr=True, min_max=(-1, 1))
         except RuntimeError as error:
