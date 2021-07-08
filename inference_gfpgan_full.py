@@ -147,7 +147,11 @@ if __name__ == '__main__':
     gfpgan.load_state_dict(checkpoint['params_ema'])
     gfpgan.eval()
 
-    img_list = sorted(glob.glob(os.path.join(args.input_dir, '*')))
+    types = ('*.png', '*.jpg', '*.jpeg')
+    files_grabbed = []
+    for files in types:
+        files_grabbed.extend(glob.glob(os.path.join(args.input_dir, files)))
+    img_list = sorted(files_grabbed) 
 
     # initialize face helper
     face_helper = FaceRestoreHelper(
